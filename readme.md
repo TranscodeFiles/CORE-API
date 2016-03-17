@@ -73,21 +73,33 @@ Extraction audio
 ```web
    http://localhost:5000/extract/name=test.mp4&output=test
 ```
+Comme le nom l'indique... Extraction audio. Name est le fichier d'entrée, et output est le nom du fichier de sortie. Le fichier sera en mp3. 
+
 Conversion vidéo
+-------------
 ```sh
 http://localhost:5000/convert/name=12.mp4&typec=avi
 ```
-Couper vidéo en 10 parties
+La vidéo à convertir. Name est le fichier d'entrée et typec est le type de sortie (ex: avi dans ce cas)
+
+Couper vidéo en parties de 30 secondes
+-------------
 ```sh
 http://localhost:5000/separate/name=12.mp4
 ```
+La vidéo sera coupée en parties de 30 secondes. Name est le fichier d'entrée
+
 Créer liste txt des fichiers découpés => (NON OBLIGATOIRE, LE SEPARATE GENERE DEJA LE FICHIER TXT)
+-------------
 ```sh
 http://localhost:5000/generate/name=12.mp4
 ```
+
+
 Concat des vidéos
+-------------
 ```sh
 http://localhost:5000/concat/name=BUU.mp4.txt
 ```
-
+La vidéo sera regroupée. name est le fichier texte d'entrée
 
