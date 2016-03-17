@@ -4,14 +4,10 @@ from flask import Flask
 from flask import render_template
 import subprocess
 from os.path import basename
-import math
+import glob
+from flask import jsonify
 app = Flask(__name__)
-
-def getLength(filename):
-  result = subprocess.Popen(["ffprobe", filename],
-    stdout = subprocess.PIPE, stderr = subprocess.STDOUT)
-  return [x for x in result.stdout.readlines() if "Duration" in x]
-
+  
 @app.route('/')
 def hello_world():
     return 'Hello World!'
@@ -31,6 +27,11 @@ def convert(name=None,typec=None):
 	subprocess.call(['ffmpeg -i /media/sf_shared/'+name+' '+('.').join(name.split('.')[:-1])+'.'+typec], shell=True)
 	return '200'
 	
+@app.route('/separate/name=<name>')
+def separate(name=None):
+	subprocess.call(['ffmpeg -i /media/sf_shared/'+name+' -acodec copy -f segment -segment_time 30 -vcodec copy -reset_timestamps 1 -map 0 -an '+('.').join(name.split('.')[:-1])+'_%d.'+name.split(".")[-1]], shell=True)
+	tab = glob.glob(('.').join(name.split('.')[:-1])+'_*')	
+	return 	jsonify(files = tab)
 
 if __name__ == '__main__':
     app.debug = True
