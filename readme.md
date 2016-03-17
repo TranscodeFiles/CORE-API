@@ -79,7 +79,7 @@ http://localhost:5000/convert/name=12.mp4&typec=avi
 ```
 Couper vidéo en 10 parties
 ```sh
-http://localhost:5000/separate/name=12.mp4&output
+http://localhost:5000/separate/name=12.mp4
 ```
 Créer liste txt des fichiers découpés => (NON OBLIGATOIRE, LE SEPARATE GENERE DEJA LE FICHIER TXT)
 ```sh
