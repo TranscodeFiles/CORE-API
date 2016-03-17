@@ -24,6 +24,7 @@ Supported Libraries
 
 * `Flask <http://flask.pocoo.org/>`_ 0.10.1
 * `Celery <http://www.celeryproject.org/>`_ 3.1.11
+* `FFmpeg <http://www.faqforge.com/linux/how-to-install-ffmpeg-on-ubuntu-14-04/>
 
 Quickstart
 ==========
