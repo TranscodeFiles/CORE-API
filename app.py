@@ -1,4 +1,4 @@
-"""" core-api.py """
+""" core-api.py """
 
 from flask import Flask
 from flask import render_template
@@ -30,6 +30,7 @@ def extract(name=None,output=None):
 def convert(name=None,typec=None):
 	subprocess.call(['ffmpeg -i /media/sf_shared/'+name+' '+('.').join(name.split('.')[:-1])+'.'+typec], shell=True)
 	return '200'
+	
 
 if __name__ == '__main__':
     app.debug = True
