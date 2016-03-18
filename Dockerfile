@@ -1,12 +1,16 @@
 # gunicorn-flask
 
-FROM ubuntu:12.04
+FROM ubuntu:14.04
 MAINTAINER Daniel Riti <dmriti@gmail.com>
 
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN apt-get update
-RUN apt-get install -y python python-pip python-virtualenv gunicorn
+RUN apt-get update 
+RUN apt-get install -y software-properties-common
+RUN apt-add-repository ppa:mc3man/trusty-media
+RUN apt-get update 
+RUN apt-get install -y ffmpeg
+RUN apt-get install -y python python-pip python-virtualenv
 
 # Setup flask application
 RUN mkdir -p /deploy/app
@@ -18,5 +22,5 @@ WORKDIR /deploy/app
 EXPOSE 5000
 
 # Start gunicorn
-CMD ["/usr/bin/gunicorn", "--config", "/deploy/gunicorn_config.py", "core-api:app"]
+CMD ["gunicorn", "--config", "/deploy/gunicorn_config.py","--reload", "core-api:app"]
 
