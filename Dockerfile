@@ -3,24 +3,23 @@
 FROM ubuntu:14.04
 MAINTAINER Daniel Riti <dmriti@gmail.com>
 
-ENV DEBIAN_FRONTEND noninteractive
-
-RUN apt-get update 
-RUN apt-get install -y software-properties-common
-RUN apt-add-repository ppa:mc3man/trusty-media
-RUN apt-get update 
-RUN apt-get install -y ffmpeg
-RUN apt-get install -y python python-pip python-virtualenv
-
-# Setup flask application
-RUN mkdir -p /deploy/app
-COPY gunicorn_config.py /deploy/gunicorn_config.py
-COPY app /deploy/app
-RUN pip install -r /deploy/app/requirements.txt
-WORKDIR /deploy/app
-
 EXPOSE 5000
 
-# Start gunicorn
-CMD ["gunicorn", "--config", "/deploy/gunicorn_config.py","--reload", "core-api:app"]
+ENV DEBIAN_FRONTEND noninteractive
 
+COPY gunicorn_config.py /deploy/gunicorn_config.py
+COPY app /deploy/app
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+
+RUN apt-get update && \
+    apt-get install -y software-properties-common && \
+    apt-add-repository ppa:mc3man/trusty-media && \
+    apt-get update && \
+    apt-get install -y ffmpeg python python-pip python-virtualenv && \
+    mkdir -p /deploy/app && \
+    pip install -r /deploy/app/requirements.txt && \
+    chmod +x /docker-entrypoint.sh
+
+ENTRYPOINT ["/docker-entrypoint.sh"]
+
+WORKDIR /deploy/app
