@@ -1,10 +1,13 @@
 from flask_restful import Resource
 from flask import jsonify
 import header, subprocess
+from tasks import extract_ff
 globpath = "/media/sf_shared/"
 apipath =  "/media/sf_shared/API-CORE/app/"
 
 class Extract(Resource):
     def get(self,name=None,output=None):
-        subprocess.call(['ffmpeg -i '+globpath+name +' -vn -ab 128 '+ output+'.mp3'], shell=True)
-        return jsonify(file=apipath+output+'.mp3',success =  'true')
+        extract = extract_ff.delay(name, output)
+        while not extract.ready():
+            time.sleep(1)
+        return extract.get()

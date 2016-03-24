@@ -24,6 +24,7 @@ Supported Libraries
 
 * `Flask <http://flask.pocoo.org/>`_ 0.10.1
 * `Celery <http://www.celeryproject.org/>`_ 3.1.11
+* `RabbitMQ
 * `FFmpeg <http://www.faqforge.com/linux/how-to-install-ffmpeg-on-ubuntu-14-04/>
 
 Quickstart
@@ -48,7 +49,10 @@ et
 ```sh	
     pip install Celery
 ```
-RabbitMQ est présent nativement dans Celery. Il n'y a donc pas d'utilité à faire un ``pip install rabbitmq``.
+et
+```sh
+	sudo apt-get install rabbitmq-server
+```
 
 
 Examples
@@ -56,11 +60,39 @@ Examples
 
 Lancement de l'API
 -------------
-
+Installer l'environnement virtuel python: (en dehors d'un fichier partagé)
 ```sh
-   python app.py
+	sudo apt-get update
+	sudo apt-get install python-virtualenv
+```
+Ensuite, il faut exécuter dans le dossier où se trouve le fichier tasks.py et le core-api.py:
+```sh
+	virtualenv --no-site-packages venv
+```
+puis
+```
+	source venv/bin/activate
 ```
 
+Tout devrait être à présent fonctionnel.
+
+Lancez dans le même dossier (où se trouve le tasks.py)
+```sh
+   celery worker -A tasks &
+```
+Pour lancer le process des workers.
+
+Si vous voulez vérifier que votre worker est lancé:
+```
+	ps auxww | grep 'celery worker' 
+```
+Vous pouvez faire un :
+```
+	python core-api.py
+```
+Votre serveur devrait être lancé et fonctionnel.
+
+Changez les header des fichiers dans le dossier resources si vous n'utilisez pas les paths par défaut.
 Attention: FAITES UNE REDIRECTION DE PORT OU PENSEZ A FAIRE UN IPTABLES EN RAPPORT (l'application se lance sur le port 5000 par défaut):
 
 ```sh

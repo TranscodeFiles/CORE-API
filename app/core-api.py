@@ -8,6 +8,7 @@ from resources.convert import Convert
 from resources.extract import Extract
 from resources.generate import Generate
 from resources.separate import Separate
+
 app = Flask(__name__)
 api = Api(app)
 
