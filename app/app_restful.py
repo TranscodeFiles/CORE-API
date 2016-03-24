@@ -3,8 +3,11 @@
 import resources.header
 from flask import Flask, request, render_template, jsonify
 from flask_restful import Resource, Api
-from resources.concat import Concat, Convert, Extract, Generate, Separate
-
+from resources.concat import Concat
+from resources.convert import Convert
+from resources.extract import Extract
+from resources.generate import Generate
+from resources.separate import Separate
 app = Flask(__name__)
 api = Api(app)
 
