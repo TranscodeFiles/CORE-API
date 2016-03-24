@@ -1,7 +1,7 @@
 # gunicorn-flask
 
 FROM ubuntu:14.04
-MAINTAINER Daniel Riti <dmriti@gmail.com>
+MAINTAINER Aymeric Daurelle <aymeric42680@gmail.com>
 
 EXPOSE 5000
 
