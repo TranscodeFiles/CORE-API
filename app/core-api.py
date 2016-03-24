@@ -1,14 +1,13 @@
 """ core-api.py """
 
+import resources.header
 from flask import Flask, request, render_template, jsonify
-import subprocess
-from os.path import basename
-import glob
+from flask_restful import Resource, Api
+from resources.concat import Concat, Convert, Extract, Generate, Separate
+
 app = Flask(__name__)
-  
-globpath = "/media/sf_shared/"
-apipath =  "/media/sf_shared/API-CORE/app/"
-  
+api = Api(app)
+
 @app.route('/')
 def hello_world():
     return 'Hello World'
@@ -18,47 +17,11 @@ def hello_world():
 def hello(name=None):
     return render_template('hello.html', name=name)
 
-@app.route('/extract/name=<name>&output=<output>')
-def extract(name=None,output=None):
-     subprocess.call(['ffmpeg -i '+globpath+name +' -vn -ab 128 '+ output+'.mp3'], shell=True)
-     return jsonify(file=apipath+output+'.mp3',success =  'true')
-
-@app.route('/convert/name=<name>&typec=<typec>')
-def convert(name=None,typec=None):
-    ret = subprocess.call(['ffmpeg -i '+globpath+name+' '+('.').join(name.split('.')[:-1])+'.'+typec], shell=True)
-    if ret != 0:
-        if ret < 0:
-            print "Killed by signal", -ret
-            return jsonify(file=apipath+('.').join(name.split('.')[:-1])+'.'+typec,success = false)
-        else:
-            print "Command failed with return code", ret
-            return jsonify(file=apipath+('.').join(name.split('.')[:-1])+'.'+typec,success = false)
-    else:
-        return jsonify(file=apipath+('.').join(name.split('.')[:-1])+'.'+typec,success =  'true')
-
-@app.route('/separate/name=<name>')
-def separate(name=None):
-    subprocess.call(['ffmpeg -i '+globpath+name+' -acodec copy -f segment -segment_time 30 -vcodec copy -reset_timestamps 1 -map 0 -an '+('.').join(name.split('.')[:-1])+'_%d.'+name.split(".")[-1]], shell=True)
-    tab = glob.glob(('.').join(name.split('.')[:-1])+'_*')
-    with open(name+".txt", "a") as myfile:
-        for item in tab:
-            myfile.write('file \''+apipath+item+'\'\n')
-    myfile.close()
-    return 	jsonify(files = tab,file=apipath+name+".txt")
-
-@app.route('/concat/name=<name>')
-def concat(name=None):
-    subprocess.call(["ffmpeg -f concat -i "+name+" -c copy "+('.').join(name.split('.')[:-1])], shell=True)
-    return jsonify(filename=('.').join(name.split('.')[:-1]),success = 'true')
-
-@app.route('/generate/name=<name>')
-def generate(name=None):
-    tab = glob.glob(('.').join(name.split('.')[:-1])+'_*.'+name.split(".")[-1])
-    with open(name+".txt", "a") as myfile:
-        for item in tab:
-            myfile.write('file \''+apipath+item+'\'\n')
-    myfile.close()
-    jsonify(file=apipath+name+".txt",success = 'true')
+api.add_resource(Extract,'/extract/name=<string:name>&output=<string:output>')
+api.add_resource(Convert,'/convert/name=<string:name>&typec=<string:typec>')
+api.add_resource(Separate,'/separate/name=<string:name>')
+api.add_resource(Concat,'/concat/name=<string:name>')
+api.add_resource(Generate,'/generate/name=<name>')
 
 
 if __name__ == '__main__':
