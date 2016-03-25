@@ -18,7 +18,8 @@ RUN apt-get update && \
     apt-get install -y ffmpeg python python-pip python-virtualenv && \
     mkdir -p /deploy/app && \
     pip install -r /deploy/app/requirements.txt && \
-    chmod +x /docker-entrypoint.sh
+    chmod +x /docker-entrypoint.sh && \
+    apt-get clean
 
 ENTRYPOINT ["/docker-entrypoint.sh"]
 

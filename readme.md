@@ -65,7 +65,7 @@ Installer l'environnement virtuel python: (en dehors d'un fichier partagé)
 	sudo apt-get update
 	sudo apt-get install python-virtualenv
 ```
-Ensuite, il faut exécuter dans le dossier où se trouve le fichier tasks.py et le core-api.py:
+Ensuite, il faut exécuter dans le dossier où se trouve le fichier tasks.py et le api.py:
 ```sh
 	virtualenv --no-site-packages venv
 ```
@@ -88,7 +88,7 @@ Si vous voulez vérifier que votre worker est lancé:
 ```
 Vous pouvez faire un :
 ```
-	python core-api.py
+	python api.py
 ```
 Votre serveur devrait être lancé et fonctionnel.
 
