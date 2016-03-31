@@ -8,5 +8,6 @@ then
 elif [ "$1" = 'worker' ];
 then 
     echo "Start worker"
-    exec celery -A coreapi:app  worker
+    export C_FORCE_ROOT="true"
+    exec celery -A tasks.celery worker
 fi
