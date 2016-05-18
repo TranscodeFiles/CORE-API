@@ -4,7 +4,7 @@ set -e
 if [ -z "$1" ] || [ "$1" = 'gunicorn' ]; 
 then
     echo "Start gunicorn"
-    exec gunicorn --config /deploy/gunicorn_config.py --reload coreapi:app
+    exec gunicorn -b 0.0.0.0:5001 --config /deploy/gunicorn_config.py --reload coreapi:app
 elif [ "$1" = 'worker' ];
 then 
     echo "Start worker"

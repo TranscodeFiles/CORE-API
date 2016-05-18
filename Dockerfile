@@ -3,7 +3,7 @@
 FROM ubuntu:14.04
 MAINTAINER Aymeric Daurelle <aymeric42680@gmail.com>
 
-EXPOSE 5000
+EXPOSE 5001
 
 ENV DEBIAN_FRONTEND noninteractive
 
