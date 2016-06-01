@@ -4,7 +4,7 @@ import magic
 mime = magic.Magic(mime=True)
 
 user = 'johndoe:swift'
-key = 'cuNxJ4p0kWUfutRtsyYNOEJ5y6PeRNew5UkClepN'
+key = 'rJrk5aYy8d6kCM1N1IasVQJmFJyXIawSu0d1L224'
 
 conn = swiftclient.Connection(
     user=user,
