@@ -40,21 +40,26 @@ def transcode(name=None, type_file=None, id_file=None, user_id=None):
     :param      str  type_file:  Type of file to convert
     :param      str  user_id:
     """
-    data = {'Success': True, 'File': '', 'Code': 201, 'UserId': user_id}
+    data = {'Success': True, 'File': 'test', 'Code': 201, 'Percentage': 0, 'UserId': user_id, 'Message': 'Hola'}
     path = tmp_path + user_id + "/"
 
     #: STEP 1 : DOWNLOAD FILE
-    task_download_file = download_file_ff.delay(path, name, user_id, conn)
+    task_download_file = download_file_ff.delay(path, name, user_id, conn, data)
     while not task_download_file.ready():
         time.sleep(1)
+    data = task_download_file.get()
+    callback(id_file, data, path, 20, "Download file")
+
     #: STEP 2 : SEPARATE FILE
     task_separate = separate_ff.delay(path, name, type_file, data)
     while not task_separate.ready():
         time.sleep(1)
     files, txt_file, data = task_separate.get()
     if data['Code'] is not 201:
-        callback(id_file, data, path)
+        callback(id_file, data, path, 0)
         return False
+    callback(id_file, data, path, 40, "Slice file")
+
     #: STEP 3 : CONVERT SEPARATED FILES
     tasks_convert = group(convert_ff.s(item_file, type_file, data) for item_file in files)
     result_task_convert = tasks_convert.apply_async()
@@ -62,33 +67,41 @@ def transcode(name=None, type_file=None, id_file=None, user_id=None):
         time.sleep(1)
     for item in result_task_convert.get():
         if item[1]['Code'] is not 201:
-            callback(id_file, item[1], path)
+            callback(id_file, item[1], path, 0)
             return False
+    callback(id_file, data, path, 60, "Convert files")
+
     #: STEP 4 : CONCAT ALL CONVERTED FILES
     task_concat = concat_ff.delay(path, txt_file, data)
     while not task_concat.ready():
         time.sleep(1)
     transcoded_file, data = task_concat.get()
     if data['Code'] is not 201:
-        callback(id_file, data, path)
+        callback(id_file, data, path, 0)
         return False
+    callback(id_file, data, path, 80, "Concat files")
+
     #: STEP 5 : UPLOAD CONVERTED FILE TO CEPH
     task_upload = upload_file_ff.delay(path, transcoded_file, user_id, conn, data)
     while not task_upload.ready():
         time.sleep(1)
     data = task_upload.get()
     if data['Code'] is not 201:
-        callback(id_file, data, path)
+        callback(id_file, data, path, 0)
         return False
+    clean_ff.delay(path)
     #: STEP 6 : RUN CALL_BACK URL WITH DATA
-    print "Step 5 : RUN CALL_BACK URL WITH DATA"
-    callback(id_file, data, path)
+    print "Step 6 : RUN CALL_BACK URL WITH DATA"
+    callback(id_file, data, path, 100, "Transcoded")
     return True
 
 
-def callback(id_file=None, data=None, path=None):
-    clean_ff.delay(path)
-    requests.post("http://lb-web/converted/files/" + str(id_file) + "/updatestate", data)
+def callback(id_file=None, data=None, path=None, percentage=None, message=None):
+    if message is not None:
+        data.update({'Message': message})
+
+    data.update({'Percentage': percentage})
+    requests.post("http://lb-web/app_dev.php/converted/files/" + str(id_file) + "/updatestate", data)
 
 
 @celery.task
@@ -182,9 +195,10 @@ def separate_ff(path=None, file_name=None, type_file=None, data=None):
 
 
 @celery.task
-def download_file_ff(path=None, file_name=None, user_id=None, connection=None):
+def download_file_ff(path=None, file_name=None, user_id=None, connection=None, data=None):
     """
     Task download file
+    :param                                    data:
     :param      str                           path:
     :param      swiftclient.client.Connection connection:
     :param      str                           file_name:
@@ -210,8 +224,7 @@ def download_file_ff(path=None, file_name=None, user_id=None, connection=None):
     with open(file_path, 'w') as my_file:
         my_file.write(obj_tuple[1])
 
-    #: Return new file path
-    return file_path
+    return data
 
 
 @celery.task
