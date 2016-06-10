@@ -6,6 +6,7 @@ import requests
 import time
 import magic
 import os
+import uuid
 
 from utils import convert
 from flask import g
@@ -40,7 +41,7 @@ def transcode(name=None, type_file=None, id_file=None, user_id=None):
     :param      str  user_id:
     """
     data = {'Success': True, 'File': 'emtpy', 'Code': 201, 'Percentage': 0, 'UserId': user_id, 'Message': 'empty'}
-    path = tmp_path + user_id + "/"
+    path = tmp_path + user_id + "/" + str(uuid.uuid4()) + "/"
 
     #: STEP 1 : SEPARATE FILE
     task_separate = separate_ff.delay(path, name, data, conn, user_id)
@@ -85,14 +86,13 @@ def transcode(name=None, type_file=None, id_file=None, user_id=None):
         return False
 
     #: STEP 5 : RUN CALL_BACK URL WITH DATA
-    print "Step 6 : RUN CALL_BACK URL WITH DATA"
     callback(id_file, data, 100, "Transcoded")
     return True
 
 
 def callback(id_file=None, data=None, percentage=None, message=None):
     """
-    Callback return result to web app
+    Callback
     :param id_file:
     :param data:
     :param percentage:
@@ -127,13 +127,15 @@ def concat_ff(path=None, name=None, data=None, p_conn=None, user_id=None, files=
         for item_file in files:
             data = download_file(path, item_file, user_id, p_conn, data)
             if data['Code'] is not 201:
+                # Remove files
+                clean(path)
                 return name, data
 
         # Generate file text with all converted name file into
         file_txt = '.'.join(name.split('.')[:-1]) + '.' + type_file + ".txt"
 
-        file_path = path + file_txt
         #: Check if path exist, if not create it
+        file_path = path + file_txt
         if not os.path.exists(os.path.dirname(file_path)):
             try:
                 os.makedirs(os.path.dirname(file_path))
@@ -148,17 +150,23 @@ def concat_ff(path=None, name=None, data=None, p_conn=None, user_id=None, files=
                     my_file.write('file \'' + path + '.'.join(item_file.split('.')[:-1]) + '.' + type_file + '\'\n')
             my_file.close()
         except subprocess.CalledProcessError:
-            return "", data.update({'Code': 500, 'Message': 'Error concat file'})
+            # Remove files
+            clean(path)
+            data.update({'Code': 500, 'Message': 'Error concat file'})
+            return name, data
 
         # Run ffmpeg for concat transcode files to one file
         concat_file = '.'.join(name.split('.')[:-1]) + "." + type_file
         try:
             subprocess.check_call([
-                "ffmpeg -f concat -safe 0 -i " + path + file_txt +
+                "ffmpeg -f concat -safe 0 -i " + file_path +
                 " -c copy " + path + concat_file],
                 shell=True)
         except subprocess.CalledProcessError:
+            # Remove files
+            clean(path)
             data.update({'Code': 500, 'Message': 'Error concat file'})
+            return name, data
         data.update({'File': concat_file})
 
         # Upload converted file to ceph
@@ -186,19 +194,25 @@ def convert_ff(path=None, name=None, type_file=None, data=None, p_conn=None, use
         if (name is None or name is False) or (type_file is None or False) or p_conn is None or user_id is None:
             return False
 
+        convert_path = path + str(uuid.uuid4()) + "/"
+
         # Download file in ceph
-        data = download_file(path, name, user_id, p_conn, data)
+        data = download_file(convert_path, name, user_id, p_conn, data)
         if data['Code'] is not 201:
+            clean(convert_path)
             return name, data
 
         # Run ffmpeg to convert file
         transcode_name_file = '.'.join(name.split('.')[:-1]) + '.' + type_file
 
         try:
-            subprocess.check_call(['ffmpeg -i ' + path + name + ' ' + path + transcode_name_file],
+            subprocess.check_call(['ffmpeg -i ' + convert_path + name + ' ' + path + transcode_name_file],
                                   shell=True)
         except subprocess.CalledProcessError:
-            return data.update({'Code': 500, 'Message': 'Error convert file'})
+            # Remove directory
+            clean(convert_path)
+            data.update({'Code': 500, 'Message': 'Error convert file'})
+            return transcode_name_file, data
 
         # Upload converted file to ceph
         data = upload_file(path, transcode_name_file, user_id, p_conn, data)
@@ -272,7 +286,8 @@ def download_file(path=None, file_name=None, user_id=None, connection=None, data
     try:
         obj_tuple = connection.get_object(user_id, file_name)
     except:
-        return data.update({'Code': 500, 'Message': 'Could not download file to ceph'})
+        data.update({'Code': 500, 'Message': 'Could not download file to ceph'})
+        return data
 
     #: Get file path for save downloaded file
     file_path = path + file_name
@@ -333,13 +348,15 @@ def clean_all_ff(files_transcode=None, files=None, user_id=None, p_conn=None, da
         for item_file in files_transcode:
             delete_file(item_file, user_id, p_conn, data)
     except:
-        return data.update({'Code': 500, 'Message': 'Could not clean'})
+        data.update({'Code': 500, 'Message': 'Could not clean'})
+        return data
 
     try:
         for item_file in files:
             delete_file(item_file, user_id, p_conn, data)
     except:
-        return data.update({'Code': 500, 'Message': 'Could not clean'})
+        data.update({'Code': 500, 'Message': 'Could not clean'})
+        return data
 
     return data
 
